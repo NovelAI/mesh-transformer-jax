@@ -175,6 +175,7 @@ def read_ckpt(pytree, dir, shards_in, finetune=False, shards_out=None, load_opt=
 
     if finetune:
         loaded_pytree['opt_state'][-1] = original_opt_state[-1]
+        loaded_pytree['step'] = original_opt_state['step']
 
     return loaded_pytree
 
