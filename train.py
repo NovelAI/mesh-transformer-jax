@@ -7,6 +7,7 @@ import wandb
 from tqdm import tqdm
 
 from mesh_transformer.build_model import build_model
+from mesh_transformer.util import gpt3_schedule
 from lm_eval import evaluator, tasks
 from tasks.eval_harness import EvalHarnessAdaptor
 from tfrecord_loader import TFRecordNewInputs
@@ -68,6 +69,9 @@ if __name__ == "__main__":
     keep_every = params["keep_every"]
     eval_tasks = params["eval_harness_tasks"]
     total_steps = params["total_steps"]
+    warmup_steps = params["warmup_steps"]
+    anneal_steps = params["anneal_steps"]
+    lr
     load_from = params["load_from"]
     finetune = params["finetune"]
 
@@ -115,6 +119,8 @@ if __name__ == "__main__":
     sequences_per_step = gradient_accumulation_steps * (per_replica_batch * tpu_size // cores_per_replica)
     tokens_per_step = params['seq'] * sequences_per_step
 
+    scheduler = gpt3_schedule(warmup_steps, anneal_steps)
+
     start = time.time()
     t.train(train_dataset.get_samples())
     print(f"Train fn compiled in {time.time() - start:.06}s")
@@ -145,6 +151,7 @@ if __name__ == "__main__":
             'train/steps_per_sec': steps_per_sec,
             'train/sequences_processed': sequences_processed,
             'train/tokens_processed': tokens_processed,
+            'train/lr': float(scheduler(step)),
         }
         wandb.log(wandb_stats, step)
 
