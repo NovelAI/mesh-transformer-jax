@@ -68,6 +68,7 @@ if __name__ == "__main__":
     keep_every = params["keep_every"]
     eval_tasks = params["eval_harness_tasks"]
     total_steps = params["total_steps"]
+    finetune = params["finetune"]
 
     pe = params["pe"]
     assert pe in ["fixed", "rotary", "t5"]
@@ -80,7 +81,7 @@ if __name__ == "__main__":
         train_load_restore = None
     except Exception as e:
         print(f"Save failed with error {e}, trying to load instead...", e)
-        step, aux = t.load(bucket, model_dir)
+        step, aux = t.load(bucket, model_dir, finetune)
         train_load_restore = aux.get("train_loader", None)
 
         if train_load_restore is None:

@@ -3,6 +3,8 @@ import random
 import time
 from functools import partial
 
+from numpy.core.numeric import outer
+
 import haiku as hk
 import jax
 import jax.numpy as jnp
@@ -282,8 +284,8 @@ class CausalTransformer:
     def write_ckpt(self, path, shard):
         write_ckpt(self.state, path, shard)
 
-    def load_ckpt(self, path):
-        self.state = read_ckpt(self.state, path, thread_resources.env.shape['mp'])
+    def load_ckpt(self, path, finetune):
+        self.state = read_ckpt(self.state, path, thread_resources.env.shape['mp'], finetune)
 
     def train(self, sample):
         # print("train iter")

@@ -150,7 +150,7 @@ class TPUCluster:
         print(f"Moved weights to TPU in {time.time() - start:.06}s")
 
     @func_set_timeout(1800)
-    def load(self, bucket, path):
+    def load(self, bucket, path, finetune):
         with open(f"gs://{bucket}/{path}/meta.json", "r") as f:
             meta = json.load(f)
 
@@ -160,7 +160,7 @@ class TPUCluster:
         start = time.time()
         res = []
         for node in self.nodes:
-            res.append(node.load_ckpt.remote(f"gs://{bucket}/{path}/step_{ckpt_step}/"))
+            res.append(node.load_ckpt.remote(f"gs://{bucket}/{path}/step_{ckpt_step}/", finetune))
 
         # make sure they all read from the same checkpoint
         step = np.array(ray.get(res))
