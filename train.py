@@ -111,6 +111,10 @@ if __name__ == "__main__":
                                  shrink=pe != "fixed",
                                  min_seq=1024 if args.version == 2 else None)  # work around suboptimal pjit layout
 
+    # tok/sec metrics
+    sequences_per_step = gradient_accumulation_steps * (per_replica_batch * tpu_size // cores_per_replica)
+    tokens_per_step = params['seq'] * sequences_per_step
+
     start = time.time()
     t.train(train_dataset.get_samples())
     print(f"Train fn compiled in {time.time() - start:.06}s")
@@ -129,7 +133,20 @@ if __name__ == "__main__":
 
     while True:
         loss, last_loss = t.train(train_dataset.get_samples())
-        wandb.log({'train/loss': loss, 'train/last_loss': last_loss}, step)
+        steps_per_sec = 1 / (time.time() - start)
+        tokens_per_sec = tokens_per_step * steps_per_sec
+        sequences_processed = sequences_per_step * step
+        tokens_processed = tokens_per_step * step
+
+        wandb_stats = {
+            'train/loss': loss,
+            'train/last_loss': last_loss,
+            'train/tokens_per_sec': tokens_per_sec,
+            'train/steps_per_sec': steps_per_sec,
+            'train/sequences_processed': sequences_processed,
+            'train/tokens_processed': tokens_processed,
+        }
+        wandb.log(wandb_stats, step)
 
         if (step % ckpt_every == 0 and step) or step == total_steps:
             t.save(step, bucket, model_dir,
